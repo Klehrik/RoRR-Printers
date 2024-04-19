@@ -8,7 +8,7 @@ Boss - 3%
 
 *Might work* in multiplayer, but if so the printer locations and items probably won't be synced.  
 
-![Printer showcase.gif (this probably won't show up in thunderstore)](https://github.com/Klehrik/RoRR-Printers/blob/main/printer_showcase.gif)
+![Printer showcase.gif (this probably won't show up in thunderstore)](https://github.com/Klehrik/RoRR-Printers/blob/main/printer_showcase_2.gif)
 
 ---
 
