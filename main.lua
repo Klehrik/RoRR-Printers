@@ -1,10 +1,10 @@
--- Printers v1.0.1
+-- Printers v1.0.2
 -- Klehrik
 
 log.info("Successfully loaded ".._ENV["!guid"]..".")
 mods.on_all_mods_loaded(function() for k, v in pairs(mods) do if type(v) == "table" and v.hfuncs then Helper = v end end end)
 
-local sPrinter = gm.sprite_add(_ENV["!plugins_mod_folder_path"].."/sPrinter.png", 1, false, false, 36, 46)
+local sPrinter = gm.sprite_add(_ENV["!plugins_mod_folder_path"].."/sPrinter.png", 23, false, false, 36, 48)
 
 local printer_base = gm.constants.oGunchest
 local Colors = {
@@ -40,6 +40,7 @@ local function spawn_printer(x, y)
     p.is_printer = true
     p.cost = 0
     p.sprite_index = sPrinter
+    p.user_valid_items = {}
 
     local rarity = 0
     local roll = gm.random_range(0, 1)
@@ -51,7 +52,7 @@ local function spawn_printer(x, y)
     repeat
         p.item_id = gm.irandom_range(0, #class_item - 1)
         p.item = class_item[p.item_id + 1]
-    until p.item[7] == rarity and p.item_id ~= 86.0
+    until p.item[7] == rarity and p.item_id ~= 86.0 and p.item[1] == "ror"
 
     local rarities = {"common", "uncommon", "rare", "", "boss"}
     p.name = gm.ds_map_find_value(lang_map, p.item[3])
@@ -102,40 +103,22 @@ gm.pre_script_hook(gm.constants.__input_system_tick, function()
         if p.is_printer then
 
             if p.active == 3.0 then
-                -- Loop through user's items and get the ones that are of the same rarity
-                local rarity = p.item[7]
                 local user = p.activator
+                local items = p.user_valid_items
 
-                local items = {}
-                if gm.array_length(user.inventory_item_order) > 0 then
-                    for _, i in ipairs(user.inventory_item_order) do
-                        local item = class_item[i + 1]
-                        local internal = item[1].."-"..item[2]
-                        local count = gm.item_count(user, gm.item_find(internal), false)
-
-                        if item[7] == rarity and count > 0 then table.insert(items, i + 1) end
-                    end
+                -- Pick a random valid item
+                local random = items[gm.irandom_range(1, #items)] - 1
+                if #items > 1 then
+                    -- Try to pick an item that isn't the one being printed
+                    repeat random = items[gm.irandom_range(1, #items)] - 1 until random ~= p.item_id
                 end
+                gm.item_take(user, random, 1, false)
 
-
-                -- Pick a random one (if there are any)
-                if #items > 0 then
-                    local random = items[gm.irandom_range(1, #items)] - 1
-                    if #items > 1 then
-                        -- Try to pick an item that isn't the one being printed
-                        repeat random = items[gm.irandom_range(1, #items)] - 1 until random ~= p.item_id
-                    end
-                    gm.item_take(user, random, 1, false)
-
-                    p.taken = random
-                    p.taken_anim = 0
-                    p.active = 4.0
-                    gm.audio_play_sound(gm.constants.wDroneRecycler_Activate, 0, false)
-                
-                else
-                    p.active = 0.0
-                    gm.audio_play_sound(gm.constants.wError, 0, false)
-                end
+                -- Start printing animation
+                p.taken = random
+                p.taken_anim = 0
+                p.active = 4.0
+                gm.audio_play_sound(gm.constants.wDroneRecycler_Activate, 0, false)
             
             end
         end
@@ -161,14 +144,17 @@ gm.post_code_execute(function(self, other, code, result, flags)
 
 
                 -- Item take animation
-                local function draw_taken(x, y)
-                    gm.draw_sprite_ext(class_item[p.taken + 1][8], 0, x, y, 1.0, 1.0, 0.0, Colors[1], 1.0)
+                local function draw_taken(x, y, scale)
+                    local scale = scale or 1.0
+                    gm.draw_sprite_ext(class_item[p.taken + 1][8], 0, x, y, scale, scale, 0.0, Colors[1], 1.0)
                 end
                 
                 local user = p.activator
                 local base_time = 60
+                local print_time = 35
                 local hole_x, hole_y = -18, -22
 
+                -- This is kinda badly written but it works so whatever
                 if p.active == 4.0 then
                     p.taken_anim = p.taken_anim + 1
 
@@ -176,34 +162,38 @@ gm.post_code_execute(function(self, other, code, result, flags)
                         draw_taken(user.x, user.y - 48)
 
                     elseif p.taken_anim == base_time then
-                        p.taken_x, p.taken_y = user.x, user.y - 48
-                        gm.audio_play_sound(gm.constants.wDroneRecycler_Recycling, 0, false)
+                        p.taken_x, p.taken_y, p.taken_scale = user.x, user.y - 48, 1.0
 
                     elseif p.taken_anim <= base_time + 2 then
-                        draw_taken(p.taken_x, p.taken_y)
+                        draw_taken(p.taken_x, p.taken_y, p.taken_scale)
                         p.taken_x = gm.lerp(p.taken_x, p.x + hole_x, 0.1)
                         p.taken_y = gm.lerp(p.taken_y, p.y + hole_y, 0.1)
-                        if gm.point_distance(p.taken_x, p.taken_y, p.x + hole_x, p.y + hole_y) > 1 then p.taken_anim = base_time + 1 end
+                        p.taken_scale = gm.lerp(p.taken_scale, 0.4, 0.1)
+                        if gm.point_distance(p.taken_x, p.taken_y, p.x + hole_x, p.y + hole_y) > 1 then p.taken_anim = base_time + 1
+                        end
+
+                    elseif p.taken_anim <= base_time + print_time then
+                        p.image_speed = 2.0
+                        if p.image_index == 10.0 then gm.audio_play_sound(gm.constants.wDroneRecycler_Recycling, 0, false)
+                        elseif p.image_index < 21.0 then p.taken_anim = base_time + 3
+                        else p.image_speed = 0.0
+                        end
 
                     else
                         p.active = 0.0
+                        p.image_speed = -2.0
                         local created = gm.instance_create_depth(p.x + hole_x, p.y + hole_y, 0, p.item[9])
                         created.is_printed = true
 
                     end
 
                 end
+
+                if p.image_speed < 0 and p.image_index <= 1.0 then
+                    p.image_speed = 0
+                    p.image_index = 0
+                end
             end
-        end
-    end
-end)
-
-
-gm.pre_script_hook(gm.constants.callback_execute, function(self, other, result, args)
-    -- Check for chest opening
-    if args[1].value == 37.0 then
-        if self.is_printer then
-            self.active = 3.0
         end
     end
 end)
@@ -216,6 +206,39 @@ end)
 
 gm.post_script_hook(gm.constants.stage_goto, function(self, other, result, args)
     create_printers = true
+end)
+
+
+gm.pre_script_hook(gm.constants.interactable_set_active, function(self, other, result, args)
+    -- Check if the player has a valid item to print with
+    if self.is_printer then
+        self.user_valid_items = gm.array_create()
+
+        if gm.array_length(other.inventory_item_order) > 0 then
+            for _, i in ipairs(other.inventory_item_order) do
+                local item = class_item[i + 1]
+                local internal = item[1].."-"..item[2]
+                local count = gm.item_count(other, gm.item_find(internal), false)
+
+                if item[7] == self.item[7] and count > 0 then gm.array_push(self.user_valid_items, i + 1) end
+            end
+        end
+
+        if gm.array_length(self.user_valid_items) <= 0 then
+            gm.audio_play_sound(gm.constants.wError, 0, false)
+            return false
+        end
+    end
+end)
+
+
+gm.post_script_hook(gm.constants.callback_execute, function(self, other, result, args)
+    -- Check for chest opening
+    if args[1].value == 37.0 then
+        if self.is_printer then
+            self.active = 3.0
+        end
+    end
 end)
 
 

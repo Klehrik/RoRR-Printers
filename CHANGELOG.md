@@ -5,3 +5,9 @@
 * Tweaked spawning chances and amount
 * Updated sprite
 * Added sfx
+
+### v1.0.2
+* Updated icon.png
+* Added short animation
+* Change: Only prints vanilla items (as items from BreathingUnderwater did not spawn)
+* Fix: Can no longer fire off infinite fireworks when interacting without a valid item
