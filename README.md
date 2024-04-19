@@ -3,7 +3,7 @@ Spawns 2 or 3 printers per stage.
 
 *Might work* in multiplayer, but if so the printer locations and items probably won't be synced.
 
-[Printer showcase](https://github.com/Klehrik/RoRR-Printers/blob/main/printer_showcase.gif)
+![Printer showcase](https://github.com/Klehrik/RoRR-Printers/blob/main/printer_showcase.gif)
 
 ---
 
