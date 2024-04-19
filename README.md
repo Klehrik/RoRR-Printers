@@ -1,12 +1,12 @@
 It's here (minus the scrapping part; pray for good RNG).  
 Each stage has a 60% chance to spawn between 1 and 3 printers.  
 
-Common - 62%
-Uncommon - 32%
-Rare - 3%
-Boss - 3%
+Common - 62%  
+Uncommon - 32%  
+Rare - 3%  
+Boss - 3%  
 
-*Might work* in multiplayer, but if so the printer locations and items probably won't be synced.
+*Might work* in multiplayer, but if so the printer locations and items probably won't be synced.  
 
 ![Printer showcase.gif (this probably won't show up in thunderstore)](https://github.com/Klehrik/RoRR-Printers/blob/main/printer_showcase.gif)
 
