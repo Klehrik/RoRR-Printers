@@ -1,10 +1,10 @@
--- Printers v1.0.0
+-- Printers v1.0.1
 -- Klehrik
 
 log.info("Successfully loaded ".._ENV["!guid"]..".")
 mods.on_all_mods_loaded(function() for k, v in pairs(mods) do if type(v) == "table" and v.hfuncs then Helper = v end end end)
 
-local sPrinter = gm.sprite_add(_ENV["!plugins_mod_folder_path"].."/sPrinter.png", 1, false, false, 30, 50)
+local sPrinter = gm.sprite_add(_ENV["!plugins_mod_folder_path"].."/sPrinter.png", 1, false, false, 36, 46)
 
 local printer_base = gm.constants.oGunchest
 local Colors = {
@@ -17,10 +17,13 @@ local Colors = {
 
 local class_item = nil
 local lang_map = nil
-local run_printer_swaps = false
+local create_printers = false
 local sine = 0
 
-local min_printers = 2  -- Per stage
+
+-- Parameters
+local printer_chance = 0.6
+local min_printers = 1  -- Per stage
 local max_printers = 3
 
 -- White 62%, Green 32%, Red 3%, Yellow 3%
@@ -69,8 +72,11 @@ gm.pre_script_hook(gm.constants.__input_system_tick, function()
 
 
     -- Place down printers
-    if run_printer_swaps and Helper.get_client_player() then
-        run_printer_swaps = false
+    if create_printers and Helper.get_client_player() then
+        create_printers = false
+
+        -- Only spawn them sometimes
+        if not Helper.chance(printer_chance) then return end
 
         local blocks = Helper.find_active_instance_all(gm.constants.oB)
         local tp = Helper.get_teleporter()
@@ -124,8 +130,11 @@ gm.pre_script_hook(gm.constants.__input_system_tick, function()
                     p.taken = random
                     p.taken_anim = 0
                     p.active = 4.0
+                    gm.audio_play_sound(gm.constants.wDroneRecycler_Activate, 0, false)
                 
-                else p.active = 0.0
+                else
+                    p.active = 0.0
+                    gm.audio_play_sound(gm.constants.wError, 0, false)
                 end
             
             end
@@ -142,7 +151,7 @@ gm.post_code_execute(function(self, other, code, result, flags)
         for _, p in ipairs(chests) do
             if p.is_printer then
                 -- Draw hovering sprite
-                gm.draw_sprite_ext(p.item[8], 0, p.x + 14, p.y - 36 + gm.dsin(sine) * 4, 0.75, 0.75, 0.0, Colors[1], 1.0)
+                gm.draw_sprite_ext(p.item[8], 0, p.x + 10, p.y - 33 + gm.dsin(sine) * 3, 0.75, 0.75, 0.0, Colors[1], 1.0)
                 
                 -- Display item name
                 local cb = 0
@@ -158,6 +167,7 @@ gm.post_code_execute(function(self, other, code, result, flags)
                 
                 local user = p.activator
                 local base_time = 60
+                local hole_x, hole_y = -18, -22
 
                 if p.active == 4.0 then
                     p.taken_anim = p.taken_anim + 1
@@ -167,16 +177,17 @@ gm.post_code_execute(function(self, other, code, result, flags)
 
                     elseif p.taken_anim == base_time then
                         p.taken_x, p.taken_y = user.x, user.y - 48
+                        gm.audio_play_sound(gm.constants.wDroneRecycler_Recycling, 0, false)
 
                     elseif p.taken_anim <= base_time + 2 then
                         draw_taken(p.taken_x, p.taken_y)
-                        p.taken_x = gm.lerp(p.taken_x, p.x - 14, 0.1)
-                        p.taken_y = gm.lerp(p.taken_y, p.y - 22, 0.1)
-                        if gm.point_distance(p.taken_x, p.taken_y, p.x - 14, p.y - 22) > 1 then p.taken_anim = base_time + 1 end
+                        p.taken_x = gm.lerp(p.taken_x, p.x + hole_x, 0.1)
+                        p.taken_y = gm.lerp(p.taken_y, p.y + hole_y, 0.1)
+                        if gm.point_distance(p.taken_x, p.taken_y, p.x + hole_x, p.y + hole_y) > 1 then p.taken_anim = base_time + 1 end
 
                     else
                         p.active = 0.0
-                        local created = gm.instance_create_depth(p.x, p.y, 0, p.item[9])
+                        local created = gm.instance_create_depth(p.x + hole_x, p.y + hole_y, 0, p.item[9])
                         created.is_printed = true
 
                     end
@@ -199,12 +210,12 @@ end)
 
 
 gm.post_script_hook(gm.constants.stage_roll_next, function(self, other, result, args)
-    run_printer_swaps = true
+    create_printers = true
 end)
 
 
 gm.post_script_hook(gm.constants.stage_goto, function(self, other, result, args)
-    run_printer_swaps = true
+    create_printers = true
 end)
 
 

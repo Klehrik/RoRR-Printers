@@ -1,9 +1,14 @@
 It's here (minus the scrapping part; pray for good RNG).  
-Spawns 2 or 3 printers per stage.  
+Each stage has a 60% chance to spawn between 1 and 3 printers.  
+
+Common - 62%
+Uncommon - 32%
+Rare - 3%
+Boss - 3%
 
 *Might work* in multiplayer, but if so the printer locations and items probably won't be synced.
 
-![Printer showcase](https://github.com/Klehrik/RoRR-Printers/blob/main/printer_showcase.gif)
+![Printer showcase.gif (this probably won't show up in thunderstore)](https://github.com/Klehrik/RoRR-Printers/blob/main/printer_showcase.gif)
 
 ---
 
@@ -18,3 +23,5 @@ Install this mod through the Mod Manager:
 
 ### Credits
 * Everybody active in the [Return of Modding server](https://discord.gg/VjS57cszMq).
+* **invenotxnightcatwatcheryuri** for the updated sprite.
+* **57folhinha** for balancing suggestions.
