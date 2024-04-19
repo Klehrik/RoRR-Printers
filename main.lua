@@ -152,6 +152,10 @@ gm.post_code_execute(function(self, other, code, result, flags)
 
 
                 -- Item take animation
+                local function draw_taken(x, y)
+                    gm.draw_sprite_ext(class_item[p.taken + 1][8], 0, x, y, 1.0, 1.0, 0.0, Colors[1], 1.0)
+                end
+                
                 local user = p.activator
                 local base_time = 60
 
@@ -159,13 +163,13 @@ gm.post_code_execute(function(self, other, code, result, flags)
                     p.taken_anim = p.taken_anim + 1
 
                     if p.taken_anim < base_time then
-                        gm.draw_sprite_ext(class_item[p.taken + 1][8], 0, user.x, user.y - 48, 1.0, 1.0, 0.0, Colors[1], 1.0)
+                        draw_taken(user.x, user.y - 48)
 
                     elseif p.taken_anim == base_time then
                         p.taken_x, p.taken_y = user.x, user.y - 48
 
                     elseif p.taken_anim <= base_time + 2 then
-                        gm.draw_sprite_ext(class_item[p.taken + 1][8], 0, p.taken_x, p.taken_y, 1.0, 1.0, 0.0, Colors[1], 1.0)
+                        draw_taken(p.taken_x, p.taken_y)
                         p.taken_x = gm.lerp(p.taken_x, p.x - 14, 0.1)
                         p.taken_y = gm.lerp(p.taken_y, p.y - 22, 0.1)
                         if gm.point_distance(p.taken_x, p.taken_y, p.x - 14, p.y - 22) > 1 then p.taken_anim = base_time + 1 end
