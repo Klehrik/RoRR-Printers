@@ -1,4 +1,4 @@
--- Printers v1.0.2
+-- Printers v1.0.3
 -- Klehrik
 
 log.info("Successfully loaded ".._ENV["!guid"]..".")
@@ -108,10 +108,6 @@ gm.pre_script_hook(gm.constants.__input_system_tick, function()
 
                 -- Pick a random valid item
                 local random = items[gm.irandom_range(1, #items)] - 1
-                if #items > 1 then
-                    -- Try to pick an item that isn't the one being printed
-                    repeat random = items[gm.irandom_range(1, #items)] - 1 until random ~= p.item_id
-                end
                 gm.item_take(user, random, 1, false)
 
                 -- Start printing animation
@@ -213,18 +209,19 @@ gm.pre_script_hook(gm.constants.interactable_set_active, function(self, other, r
     -- Check if the player has a valid item to print with
     if self.is_printer then
         self.user_valid_items = gm.array_create()
+        local items = self.user_valid_items
 
         if gm.array_length(other.inventory_item_order) > 0 then
             for _, i in ipairs(other.inventory_item_order) do
                 local item = class_item[i + 1]
                 local internal = item[1].."-"..item[2]
-                local count = gm.item_count(other, gm.item_find(internal), false)
 
-                if item[7] == self.item[7] and count > 0 then gm.array_push(self.user_valid_items, i + 1) end
+                -- Valid item if the same rarity and NOT the same item as the printer
+                if item[7] == self.item[7] and item[9] ~= self.item[9] then gm.array_push(items, i + 1) end
             end
         end
 
-        if gm.array_length(self.user_valid_items) <= 0 then
+        if #items <= 0 then
             gm.audio_play_sound(gm.constants.wError, 0, false)
             return false
         end
