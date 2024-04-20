@@ -1,4 +1,4 @@
--- Printers v1.0.3
+-- Printers v1.0.4
 -- Klehrik
 
 log.info("Successfully loaded ".._ENV["!guid"]..".")
@@ -6,7 +6,7 @@ mods.on_all_mods_loaded(function() for k, v in pairs(mods) do if type(v) == "tab
 
 local sPrinter = gm.sprite_add(_ENV["!plugins_mod_folder_path"].."/sPrinter.png", 23, false, false, 36, 48)
 
-local printer_base = gm.constants.oGunchest
+local printer_base = gm.constants.oArtifactShrine
 local Colors = {
     16777215,   -- White
     5813365,    -- Green

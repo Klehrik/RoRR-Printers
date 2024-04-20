@@ -16,3 +16,6 @@
 * Change: Can no longer print an item into itself
     * This is how it usually works in RoR2, but in Returns it is abusable with the Substandard Duplicator
     * This change will also prevent fireworks from being used freely in the same manner
+
+### v1.0.4
+* Fix: Printers being triggered using Explorer's Key
