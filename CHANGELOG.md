@@ -18,4 +18,8 @@
     * This change will also prevent fireworks from being used freely in the same manner
 
 ### v1.0.4
-* Fix: Printers being triggered using Explorer's Key
+* Fix: Printers can no longer be triggered using Explorer's Key
+
+### v1.0.5
+* Slighly tweaked floating item appearance
+* Change: 3 printers (white, green, red) will always spawn in the Contact Light's cabin room
