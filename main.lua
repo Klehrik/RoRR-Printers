@@ -1,4 +1,4 @@
--- Printers v1.0.5
+-- Printers v1.0.6
 -- Klehrik
 
 log.info("Successfully loaded ".._ENV["!guid"]..".")
@@ -23,19 +23,16 @@ local Colors = {
 
 
 -- Parameters
-local printer_chance = 0.6  -- Per stage
-local min_printers = 1
-local max_printers = 3
-                            -- White    62%
-local green_chance = 0.32   -- Green    32%
-local red_chance = 0.03     -- Red       3%
-local yellow_chance = 0.03  -- Yellow    3%
+local printer_chances = {0,0,0,0,  1,1,1,  2,2,  3}
+local green_chance  = 0.32  -- White chance is 62%
+local red_chance    = 0.03
+local yellow_chance = 0.03
 
-local animation_held_time = 60
-local animation_print_time = 35
-local box_x_offset = -18    -- Location of the input box of the printer relative to the origin
-local box_y_offset = -22
-local box_input_scale = 0.4
+local animation_held_time   = 60
+local animation_print_time  = 33
+local box_x_offset          = -18   -- Location of the input box of the printer relative to the origin
+local box_y_offset          = -22
+local box_input_scale       = 0.4   -- Item scale when it enters the input box
 
 
 
@@ -106,14 +103,13 @@ gm.pre_script_hook(gm.constants.__input_system_tick, function()
             end
        
         -- Normal printer spawning
-        elseif Helper.chance(printer_chance) then
-
+        else
             -- Get valid terrain
             local blocks = Helper.find_active_instance_all(gm.constants.oB)
             local tp = Helper.get_teleporter()
 
             -- Spawn a random amount of printers
-            local count = gm.irandom_range(min_printers, max_printers)
+            local count = printer_chances[gm.irandom_range(1, #printer_chances)]
             for i = 1, count do
                 -- Make sure the printer doesn't spawn on the teleporter,
                 -- as that prevents the player from using it

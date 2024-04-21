@@ -21,5 +21,10 @@
 * Fix: Printers can no longer be triggered using Explorer's Key
 
 ### v1.0.5
-* Slighly tweaked floating item appearance
-* Change: 3 printers (white, green, red) will always spawn in the Contact Light's cabin room
+* Slightly tweaked floating item appearance
+* 3 printers (white, green, red) will now always spawn in the Contact Light's cabin room
+
+### v1.0.6
+* Tweaked spawning chances again
+    * 0 (40%), 1 (30%), 2 (20%), 3 (10%)
+    * Avg.  1.2 -> 1.0
