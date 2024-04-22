@@ -118,7 +118,7 @@ gm.pre_script_hook(gm.constants.__input_system_tick, function()
                 -- as that prevents the player from using it
                 while true do
                     local block = blocks[gm.irandom_range(1, #blocks)]
-                    local x, y = block.bbox_left + gm.irandom_range(0, block.bbox_right - block.bbox_left), block.bbox_top - 1
+                    local x, y = (block.bbox_left + 24) + gm.irandom_range(0, block.bbox_right - block.bbox_left - 24), block.bbox_top - 1
                     if gm.point_distance(x, y, tp.x, tp.y) > 64 then
                         spawn_printer(x, y)
                         break
