@@ -15,7 +15,7 @@ Up to 3 printers may spawn on each stage.
 
 You can disable hovering item names in its ImGui window.  
 
-![Printer showcase.gif (this probably won't show up in thunderstore)](https://github.com/Klehrik/RoRR-Printers/blob/main/printer_showcase_2.gif)
+![Printer showcase.gif](https://github.com/Klehrik/RoRR-Printers/blob/daa3a558a2af6e43e1f946d669880f6a47d25995/printer_showcase_2.gif?raw=true)
 
 ---
 
