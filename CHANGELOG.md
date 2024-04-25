@@ -32,3 +32,7 @@
 * Can no longer print infinite copies using temporary items
     * I thought I had already covered this but I guess not
 * Now prioritizes item scraps from Scrappers mod
+
+### v1.0.7
+* Added option to turn off hovering item names (in an ImGui window)
+* Locked items can no longer spawn in printers

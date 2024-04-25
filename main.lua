@@ -1,4 +1,4 @@
--- Printers v1.0.6
+-- Printers v1.0.7
 -- Klehrik
 
 log.info("Successfully loaded ".._ENV["!guid"]..".")
@@ -22,6 +22,13 @@ local Colors = {
 }
 
 local scrap_names = {"White", "Green", "Red", "", "Yellow"}
+
+local config = {
+    show_names = true
+}
+local file_path = path.combine(paths.plugins_data(), _ENV["!guid"]..".txt")
+local success, file = pcall(toml.decodeFromFile, file_path)
+if success then config = file.config end
 
 
 -- Parameters
@@ -62,11 +69,15 @@ local function spawn_printer(x, y, rarity)
         end
     end
 
-    -- Pick printer item (vanilla only)
+    -- Pick printer item
+    -- Make sure that the item is:
+    --      of the same rarity
+    --      in the vanilla "ror" namespace
+    --      is actually unlocked (if applicable)
     repeat
         p.item_id = gm.irandom_range(0, #class_item - 1)
         p.item = class_item[p.item_id + 1]
-    until p.item[7] == rarity and p.item_id ~= 86.0 and p.item[1] == "ror"
+    until p.item[7] == rarity and p.item[1] == "ror" and (p.item[11] == nil or gm.achievement_is_unlocked(p.item[11]))
 
     -- Set prompt text
     local rarities = {"common", "uncommon", "rare", "", "boss"}
@@ -85,6 +96,19 @@ end
 
 
 -- ========== Main ==========
+
+gui.add_imgui(function()
+    if ImGui.Begin("Printers") then
+        local value, pressed = ImGui.Checkbox("Show printer item names", config.show_names)
+        if pressed then
+            config.show_names = value
+            pcall(toml.encodeToFile, {config = config}, {file = file_path, overwrite = true})
+        end
+    end
+
+    ImGui.End()
+end)
+
 
 gm.pre_script_hook(gm.constants.__input_system_tick, function()
     -- Get global references
@@ -194,10 +218,12 @@ gm.post_code_execute(function(self, other, code, result, flags)
                                  0.8 + gm.dsin(sine / 4) * 0.25)
 
                 -- Display item name
-                local cb = 0
-                local c = Colors[p.item[7] + 1]
-                for i = 1, 2 do gm.draw_text_color(p.x + i, p.y - 64 + i, p.name, cb, cb, cb, cb, 1.0) end
-                gm.draw_text_color(p.x, p.y - 64, p.name, c, c, c, c, 1.0)
+                if config.show_names then
+                    local cb = 0
+                    local c = Colors[p.item[7] + 1]
+                    for i = 1, 2 do gm.draw_text_color(p.x + i, p.y - 64 + i, p.name, cb, cb, cb, cb, 1.0) end
+                    gm.draw_text_color(p.x, p.y - 64, p.name, c, c, c, c, 1.0)
+                end
 
 
                 -- Printer animation
@@ -270,7 +296,7 @@ end)
 -- Debug
 -- gui.add_imgui(function()
 --     local player = Helper.find_active_instance(gm.constants.oP)
---     if player and ImGui.Begin("Printers") then
+--     if player and ImGui.Begin("Printer debug") then
 
 --         if ImGui.Button("Spawn oPrinter") then
 --             local printer = spawn_printer(player.x, player.y)
