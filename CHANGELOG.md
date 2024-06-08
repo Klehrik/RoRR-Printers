@@ -36,3 +36,7 @@
 ### v1.0.7
 * Added option to turn off hovering item names (in an ImGui window)
 * Locked items can no longer spawn in printers
+
+### v1.0.8
+* Now synced in online multiplayer
+* "Show printer item names" now defaults to false

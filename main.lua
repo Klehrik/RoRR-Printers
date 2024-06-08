@@ -1,4 +1,4 @@
--- Printers v1.0.7
+-- Printers v1.0.8
 -- Klehrik
 
 log.info("Successfully loaded ".._ENV["!guid"]..".")
@@ -24,7 +24,7 @@ local Colors = {
 local scrap_names = {"White", "Green", "Red", "", "Yellow"}
 
 local config = {
-    show_names = true
+    show_names = false
 }
 local file_path = path.combine(paths.plugins_data(), _ENV["!guid"]..".txt")
 local success, file = pcall(toml.decodeFromFile, file_path)
@@ -47,17 +47,11 @@ local box_input_scale       = 0.4   -- Item scale when it enters the input box
 
 -- ========== Functions ==========
 
-local function spawn_printer(x, y, rarity)
+function spawn_printer(x, y, rarity)
+    if not Helper.is_singleplayer_or_host() then return end
+
     -- Create printer base interactable
     local p = gm.instance_create_depth(x, y, 1, printer_base)
-    p.is_printer = true
-    p.cost = 0
-    p.sprite_index = sPrinter
-    p.user_valid_items = {}
-
-    p.animation_state = nil
-    p.box_x = p.x + box_x_offset
-    p.box_y = p.y + box_y_offset
 
     -- Pick printer rarity
     if not rarity then
@@ -74,22 +68,56 @@ local function spawn_printer(x, y, rarity)
     --      of the same rarity
     --      in the vanilla "ror" namespace
     --      is actually unlocked (if applicable)
+    local item_id, item = 0, nil
     repeat
-        p.item_id = gm.irandom_range(0, #class_item - 1)
-        p.item = class_item[p.item_id + 1]
-    until p.item[7] == rarity and p.item[1] == "ror" and (p.item[11] == nil or gm.achievement_is_unlocked(p.item[11]))
+        item_id = gm.irandom_range(0, #class_item - 1)
+        item = class_item[item_id + 1]
+    until item[7] == rarity and item[1] == "ror" and (item[11] == nil or gm.achievement_is_unlocked(item[11]))
+
+    -- Run setup
+    set_up_printer(x, y, rarity, item_id)
+
+    -- [Host]  Send setup data to clients
+    if Helper.is_lobby_host() then Helper.net_send("Printer.setup", {x, y, rarity, item_id}) end
+end
+
+
+function set_up_printer(x, y, rarity, item_id)
+    local p = get_printer_at(x, y)
+    if not p then return end
+
+    -- Set variables
+    p.is_printer = true
+    p.cost = 0
+    p.sprite_index = sPrinter
+    p.user_valid_items = {}
+
+    p.box_x = p.x + box_x_offset
+    p.box_y = p.y + box_y_offset
+
+    p.item_id = item_id
+    p.item = class_item[item_id + 1]
 
     -- Set prompt text
     local rarities = {"common", "uncommon", "rare", "", "boss"}
     local cols = {"", "<g>", "<r>", "", "<y>"}
     p.name = gm.ds_map_find_value(lang_map, p.item[3])
     p.text = "Print "..cols[rarity + 1]..p.name.." <y>(1 "..rarities[rarity + 1].." item)"
-
-    return p
 end
 
 
-local function draw_item_sprite(sprite, x, y, scale, alpha)
+function get_printer_at(x, y)
+    -- Look for base interactable at the given position
+    local bases = Helper.find_active_instance_all(printer_base)
+    for _, b in ipairs(bases) do
+        -- Doesn't spawn exactly on position for some reason
+        if math.abs(b.x - x) <= 2 and math.abs(b.y - y) <= 2 then return b end
+    end
+    return nil
+end
+
+
+function draw_item_sprite(sprite, x, y, scale, alpha)
     gm.draw_sprite_ext(sprite, 0, x, y, scale or 1.0, scale or 1.0, 0.0, Colors[1], alpha or 1.0)
 end
 
@@ -119,14 +147,16 @@ gm.pre_script_hook(gm.constants.__input_system_tick, function()
     end
 
 
-    -- Place down printers on stage load (check when the player exists)
+    -- [Host]  Place down printers on stage load (check when the player exists)
+    if not Helper.is_singleplayer_or_host() then create_printers = false end
+
     if create_printers and Helper.get_client_player() then
         create_printers = false
 
         -- Spawn 3 printers in the cabin room on the Contact Light
         if class_stage[gm.variable_global_get("stage_id") + 1][2] == "riskOfRain" then
             for r = 0, 2 do
-                spawn_printer(7650.0 + (160.0 * r), 3264.0, r)
+                spawn_printer(7650 + (160 * r), 3264, r)
             end
             
         -- Normal printer spawning
@@ -152,30 +182,73 @@ gm.pre_script_hook(gm.constants.__input_system_tick, function()
             
         end
     end
+
+
+    -- [Client]  Set up printers from sent data
+    if Helper.find_active_instance(printer_base) then
+        while Helper.net_has("Printer.setup") do
+            local data = Helper.net_listen("Printer.setup").data
+            set_up_printer(data[1], data[2], data[3], data[4])
+        end
+    end
+
+
+    -- [All]  Activate printer locally
+    while Helper.net_has("Printer.use") do
+        local data = Helper.net_listen("Printer.use").data
+        printer_use(get_printer_at(data[1], data[2]), Helper.get_player_from_name(data[3]), data[4])
+    end
 end)
 
 
 gm.pre_script_hook(gm.constants.interactable_set_active, function(self, other, result, args)
     -- Check if this is a printer
     if self.is_printer then
+        local player = args[2].value
 
-        self.taken = nil
+        -- Check if this client is the activator
+        if player == Helper.get_client_player() then
+
+            if Helper.is_singleplayer() then
+                printer_use(self, player)
+
+            else
+                local taken = printer_use(self, player)
+                if taken then Helper.net_send("Printer.use", {self.x, self.y, player.user_name, taken})
+                else self.active = 0.0
+                end
+
+            end
+
+        end
+
+        return false
+    end
+end)
+
+
+function printer_use(printer, player, taken)
+    if not printer then return end
+
+    printer.taken = nil
+
+    if not taken then
         local items = {}
 
         -- Check if the user has scrap for this tier
-        local id = gm.item_find("scrappers-scrap"..scrap_names[self.item[7] + 1])
-        if id and gm.item_count(other, id, false) > 0 then
-            self.taken = id
+        local id = gm.item_find("scrappers-scrap"..scrap_names[printer.item[7] + 1])
+        if id and gm.item_count(player, id, false) > 0 then
+            printer.taken = id
 
         -- Check if the user has a valid item to print with
         else
-            if gm.array_length(other.inventory_item_order) > 0 then
-                for _, i in ipairs(other.inventory_item_order) do
-                    if gm.item_count(other, i, false) > 0 then
+            if gm.array_length(player.inventory_item_order) > 0 then
+                for _, i in ipairs(player.inventory_item_order) do
+                    if gm.item_count(player, i, false) > 0 then
                         local item = class_item[i + 1]
 
                         -- Valid item if the same rarity and NOT the same item as the printer
-                        if item[7] == self.item[7] and item[9] ~= self.item[9] then table.insert(items, i + 1) end
+                        if item[7] == printer.item[7] and item[9] ~= printer.item[9] then table.insert(items, i + 1) end
                     end
                 end
             end
@@ -186,19 +259,22 @@ gm.pre_script_hook(gm.constants.interactable_set_active, function(self, other, r
             end
         end
 
-
-        -- Override "active" to 3.0 for custom functionality
-        -- and start printer animation
-        args[3].value = 3.0
-        self.animation_state = 0
-        self.animation_time = 0
-        gm.audio_play_sound(gm.constants.wDroneRecycler_Activate, 0, false)
-        
         -- Pick a random valid item
-        if not self.taken then self.taken = items[gm.irandom_range(1, #items)] - 1 end
-        gm.item_take(other, self.taken, 1, false)
+        if not printer.taken then printer.taken = items[gm.irandom_range(1, #items)] - 1 end
+    else printer.taken = taken
     end
-end)
+
+    -- Override "active" to 3.0 for custom functionality
+    printer.active = 3
+    printer.activator = player
+    printer.animation_time = 0
+    gm.audio_play_sound(gm.constants.wDroneRecycler_Activate, 0, false)
+    
+    -- [Non-Client]  Remove item from inventory
+    if Helper.is_singleplayer_or_host() then gm.item_take(player, printer.taken, 1, false) end
+
+    return printer.taken
+end
 
 
 gm.post_code_execute(function(self, other, code, result, flags)
@@ -227,49 +303,55 @@ gm.post_code_execute(function(self, other, code, result, flags)
 
 
                 -- Printer animation
-                if p.animation_state then
+                if p.active >= 3 then
 
                     -- Draw above player
-                    if p.animation_state == 0 then
+                    if p.active == 3 then
                         draw_item_sprite(class_item[p.taken + 1][8], p.activator.x, p.activator.y - 48)
 
                         if p.animation_time < animation_held_time then p.animation_time = p.animation_time + 1
                         else
-                            p.animation_state = 1
+                            --gm.interactable_set_active(p, p.activator, 4, false, false)
+                            p.active = 4
                             p.taken_x, p.taken_y, p.taken_scale = p.activator.x, p.activator.y - 48, 1.0
                         end
 
                     -- Lerp item towards input box
-                    elseif p.animation_state == 1 then
+                    elseif p.active == 4 then
                         draw_item_sprite(class_item[p.taken + 1][8], p.taken_x, p.taken_y, p.taken_scale)
                         p.taken_x = gm.lerp(p.taken_x, p.box_x, 0.1)
                         p.taken_y = gm.lerp(p.taken_y, p.box_y, 0.1)
                         p.taken_scale = gm.lerp(p.taken_scale, box_input_scale, 0.1)
 
                         if gm.point_distance(p.taken_x, p.taken_y, p.box_x, p.box_y) < 1 then
-                            p.animation_state = 2
+                            --gm.interactable_set_active(p, p.activator, 5, false, false)
+                            p.active = 5
                             p.animation_time = 0
                         end
 
                     -- Close box for a bit
-                    elseif p.animation_state == 2 then
+                    elseif p.active == 5 then
                         p.image_speed = 2.0
 
                         if p.image_index == 10.0 then gm.audio_play_sound(gm.constants.wDroneRecycler_Recycling, 0, false)
                         elseif p.image_index >= 21.0 then
                             if p.animation_time < animation_print_time then p.animation_time = p.animation_time + 1
-                            else p.animation_state = 3
+                            else
+                                --gm.interactable_set_active(p, p.activator, 6, false, false)
+                                p.active = 6
                             end
                         end
 
                     -- Create item drop
-                    elseif p.animation_state == 3 then
+                    elseif p.active == 6 then
                         p.active = 0.0
+                        --gm.interactable_set_active(p, p.activator, 0, false, false)
                         p.image_speed = -2.0
-                        p.animation_state = nil
 
-                        local created = gm.instance_create_depth(p.box_x, p.box_y, 0, p.item[9])
-                        created.is_printed = true
+                        if Helper.is_singleplayer_or_host() then
+                            local created = gm.instance_create_depth(p.box_x, p.box_y, 0, p.item[9])
+                            created.is_printed = true
+                        end
 
                     end
                 end

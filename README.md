@@ -1,7 +1,7 @@
-It's here (without scrappers).  
-Up to 3 printers may spawn on each stage.  
+Adds item printers from Risk of Rain 2.  
+You can toggle hovering item names in its ImGui window.  
 
-*Might still work* in multiplayer (untested), but if so the printer locations and items probably won't be synced.  
+Compatible with online multiplayer.  
 
 ```
 [Chances for amount and rarities]
@@ -12,8 +12,6 @@ Up to 3 printers may spawn on each stage.
 3 printers  10 %        Boss         3 %
 (Avg. 1 per stage)
 ```
-
-You can disable hovering item names in its ImGui window.  
 
 ![Printer showcase.gif](https://github.com/Klehrik/RoRR-Printers/blob/daa3a558a2af6e43e1f946d669880f6a47d25995/printer_showcase_2.gif?raw=true)
 
