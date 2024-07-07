@@ -1,4 +1,4 @@
--- Printers v1.0.8
+-- Printers v1.0.9
 -- Klehrik
 
 log.info("Successfully loaded ".._ENV["!guid"]..".")
@@ -8,6 +8,7 @@ local sPrinter = gm.sprite_add(_ENV["!plugins_mod_folder_path"].."/sPrinter.png"
 
 local class_item = nil
 local class_stage = nil
+local class_artifact = nil
 local lang_map = nil
 
 local printer_base = gm.constants.oArtifactShrine   -- Unused interactable
@@ -111,7 +112,7 @@ function get_printer_at(x, y)
     local bases = Helper.find_active_instance_all(printer_base)
     for _, b in ipairs(bases) do
         -- Doesn't spawn exactly on position for some reason
-        if math.abs(b.x - x) <= 2 and math.abs(b.y - y) <= 2 then return b end
+        if math.abs(b.x - x) <= 3 and math.abs(b.y - y) <= 3 then return b end
     end
     return nil
 end
@@ -143,13 +144,18 @@ gm.pre_script_hook(gm.constants.__input_system_tick, function()
     if not class_item then
         class_item = gm.variable_global_get("class_item")
         class_stage = gm.variable_global_get("class_stage")
+        class_artifact = gm.variable_global_get("class_artifact")
         lang_map = gm.variable_global_get("_language_map")
     end
 
 
-    -- [Host]  Place down printers on stage load (check when the player exists)
+    -- Toggle initial spawning off if not host
     if not Helper.is_singleplayer_or_host() then create_printers = false end
 
+    -- Do not create printers if Command is active
+    if class_artifact[8][9] then create_printers = false end
+
+    -- Create printers after level init is done (check when the player exists)
     if create_printers and Helper.get_client_player() then
         create_printers = false
 
@@ -270,7 +276,7 @@ function printer_use(printer, player, taken)
     printer.animation_time = 0
     gm.audio_play_sound(gm.constants.wDroneRecycler_Activate, 0, false)
     
-    -- [Non-Client]  Remove item from inventory
+    -- [Single/Host]  Remove item from inventory
     if Helper.is_singleplayer_or_host() then gm.item_take(player, printer.taken, 1, false) end
 
     return printer.taken
@@ -311,7 +317,6 @@ gm.post_code_execute(function(self, other, code, result, flags)
 
                         if p.animation_time < animation_held_time then p.animation_time = p.animation_time + 1
                         else
-                            --gm.interactable_set_active(p, p.activator, 4, false, false)
                             p.active = 4
                             p.taken_x, p.taken_y, p.taken_scale = p.activator.x, p.activator.y - 48, 1.0
                         end
@@ -324,7 +329,6 @@ gm.post_code_execute(function(self, other, code, result, flags)
                         p.taken_scale = gm.lerp(p.taken_scale, box_input_scale, 0.1)
 
                         if gm.point_distance(p.taken_x, p.taken_y, p.box_x, p.box_y) < 1 then
-                            --gm.interactable_set_active(p, p.activator, 5, false, false)
                             p.active = 5
                             p.animation_time = 0
                         end
@@ -337,7 +341,6 @@ gm.post_code_execute(function(self, other, code, result, flags)
                         elseif p.image_index >= 21.0 then
                             if p.animation_time < animation_print_time then p.animation_time = p.animation_time + 1
                             else
-                                --gm.interactable_set_active(p, p.activator, 6, false, false)
                                 p.active = 6
                             end
                         end
@@ -345,7 +348,6 @@ gm.post_code_execute(function(self, other, code, result, flags)
                     -- Create item drop
                     elseif p.active == 6 then
                         p.active = 0.0
-                        --gm.interactable_set_active(p, p.activator, 0, false, false)
                         p.image_speed = -2.0
 
                         if Helper.is_singleplayer_or_host() then

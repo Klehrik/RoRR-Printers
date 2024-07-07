@@ -40,3 +40,6 @@
 ### v1.0.8
 * Now synced in online multiplayer
 * "Show printer item names" now defaults to false
+
+### v1.0.9
+* Printers no longer spawn when Command is active
