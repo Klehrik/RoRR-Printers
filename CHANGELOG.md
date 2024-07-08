@@ -43,3 +43,6 @@
 
 ### v1.0.9
 * Printers no longer spawn when Command is active
+
+### v1.0.10
+* Fixed Command being checked in some situations as active when it isn't

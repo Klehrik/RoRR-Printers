@@ -1,4 +1,4 @@
--- Printers v1.0.9
+-- Printers v1.0.10
 -- Klehrik
 
 log.info("Successfully loaded ".._ENV["!guid"]..".")
@@ -153,7 +153,7 @@ gm.pre_script_hook(gm.constants.__input_system_tick, function()
     if not Helper.is_singleplayer_or_host() then create_printers = false end
 
     -- Do not create printers if Command is active
-    if class_artifact[8][9] then create_printers = false end
+    if class_artifact[8][9] == true or class_artifact[8][9] == 1.0 then create_printers = false end
 
     -- Create printers after level init is done (check when the player exists)
     if create_printers and Helper.get_client_player() then
