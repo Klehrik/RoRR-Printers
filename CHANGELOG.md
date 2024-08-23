@@ -46,3 +46,11 @@
 
 ### v1.0.10
 * Fixed Command being checked in some situations as active when it isn't
+
+### v1.0.11
+* Increased average spawn rate by 35%, and increased chance of at least 1 printer spawning
+* Can now spawn modded items
+* Printers can no longer spawn on top of other interactables
+    * This also fixes printers not setting up correctly when two or more spawn on top of each other
+* Audio now scales with volume settings
+* Moved "Show item names" to menu bar (under Mods)
