@@ -1,14 +1,11 @@
--- Printers v1.0.11
+-- Printers v1.0.12
 -- Klehrik
 
 log.info("Successfully loaded ".._ENV["!guid"]..".")
-mods.on_all_mods_loaded(function() for _, m in pairs(mods) do if type(m) == "table" and m.RoRR_Modding_Toolkit then Actor = m.Actor Buff = m.Buff Callback = m.Callback Helper = m.Helper Instance = m.Instance Item = m.Item Net = m.Net Player = m.Player Resources = m.Resources Survivor = m.Survivor break end end end)
+mods.on_all_mods_loaded(function() for _, m in pairs(mods) do if type(m) == "table" and m.RoRR_Modding_Toolkit then Actor = m.Actor Alarm = m.Alarm Buff = m.Buff Callback = m.Callback Class = m.Class Equipment = m.Equipment Helper = m.Helper Instance = m.Instance Item = m.Item Net = m.Net Object = m.Object Player = m.Player Resources = m.Resources Survivor = m.Survivor break end end end)
 
 local sPrinter = gm.sprite_add(_ENV["!plugins_mod_folder_path"].."/sPrinter.png", 23, false, false, 36, 48)
 
-local class_item = nil
-local class_stage = nil
-local class_artifact = nil
 local lang_map = nil
 
 local printer_base = gm.constants.oArtifactShrine   -- Unused interactable
@@ -82,10 +79,14 @@ function spawn_printer(x, y, rarity)
     --      not in the item ban list
     --      is actually unlocked (if applicable)
     local item_id, item = 0, nil
+    local size = gm.array_length(Class.ITEM)
     repeat
-        item_id = gm.irandom_range(0, #class_item - 1)
-        item = class_item[item_id + 1]
-    until item[7] == rarity and item[1] and item[2] and (not Helper.table_has(ban_list, item[1].."-"..item[2])) and (item[11] == nil or gm.achievement_is_unlocked(item[11]))
+        item_id = gm.irandom_range(0, size - 1)
+        item = gm.array_get(Class.ITEM, item_id)
+    until gm.array_get(item, 6) == rarity
+        and gm.array_get(item, 0) and gm.array_get(item, 1)
+        and (not Helper.table_has(ban_list, gm.array_get(item, 0).."-"..gm.array_get(item, 1)))
+        and (gm.array_get(item, 10) == nil or gm.achievement_is_unlocked(gm.array_get(item, 10)))
 
     -- Run setup
     set_up_printer(x, y, rarity, item_id)
@@ -111,7 +112,7 @@ function set_up_printer(x, y, rarity, item_id)
     p.box_y = p.y + box_y_offset
 
     p.item_id = item_id
-    p.item = class_item[item_id + 1]
+    p.item = gm.array_get(Class.ITEM, item_id)
 
     -- Set prompt text
     local rarities = {"common", "uncommon", "rare", "", "boss"}
@@ -155,12 +156,7 @@ gm.pre_script_hook(gm.constants.__input_system_tick, function()
     frame = frame + 1
 
     -- Get global references
-    if not class_item then
-        class_item = gm.variable_global_get("class_item")
-        class_stage = gm.variable_global_get("class_stage")
-        class_artifact = gm.variable_global_get("class_artifact")
-        lang_map = gm.variable_global_get("_language_map")
-    end
+    if not lang_map then lang_map = gm.variable_global_get("_language_map") end
 
 
     if create_printers then
@@ -168,7 +164,9 @@ gm.pre_script_hook(gm.constants.__input_system_tick, function()
         if Net.get_type() == Net.TYPE.client then create_printers = false end
 
         -- Do not create printers if Command is active
-        if class_artifact[8][9] == true or class_artifact[8][9] == 1.0 then create_printers = false end
+        local command = gm.array_get(Class.ARTIFACT, 7)
+        local active = gm.array_get(command, 8)
+        if active == true or active == 1.0 then create_printers = false end
     end
 
 
@@ -177,7 +175,9 @@ gm.pre_script_hook(gm.constants.__input_system_tick, function()
         create_printers = false
 
         -- Spawn 3 printers in the cabin room on the Contact Light
-        if class_stage[gm.variable_global_get("stage_id") + 1][2] == "riskOfRain" then
+        local stage_array = gm.array_get(Class.STAGE, gm.variable_global_get("stage_id"))
+        local stage_identifier = gm.array_get(stage_array, 1)
+        if stage_identifier == "riskOfRain" then
             for r = 0, 2 do
                 spawn_printer(7650 + (160 * r), 3264, r)
             end
@@ -186,7 +186,6 @@ gm.pre_script_hook(gm.constants.__input_system_tick, function()
         else
             -- Get valid terrain
             local blocks = Instance.find_all(gm.constants.oB)
-            --local tp = Instance.find(Instance.teleporters)
 
             -- Spawn a random amount of printers
             local count = printer_chances[gm.irandom_range(1, #printer_chances)]
@@ -252,19 +251,23 @@ function printer_use(printer, player, taken)
         local items = {}
 
         -- Check if the user has scrap for this tier
-        local id = gm.item_find("scrappers-scrap"..scrap_names[printer.item[7] + 1])
+        local id = gm.item_find("scrappers-scrap"..scrap_names[gm.array_get(printer.item, 6) + 1])
         if id and gm.item_count(player, id, false) > 0 then
             printer.taken = id
 
         -- Check if the user has a valid item to print with
         else
-            if gm.array_length(player.inventory_item_order) > 0 then
-                for _, i in ipairs(player.inventory_item_order) do
-                    if gm.item_count(player, i, false) > 0 then
-                        local item = class_item[i + 1]
+            local size = gm.array_length(player.inventory_item_order)
+            if size > 0 then
+                for i = 0, size - 1 do
+                    local id = gm.array_get(player.inventory_item_order, i)
+
+                    if gm.item_count(player, id, false) > 0 then
+                        local item = gm.array_get(Class.ITEM, id)
 
                         -- Valid item if the same rarity and NOT the same item as the printer
-                        if item[7] == printer.item[7] and item[9] ~= printer.item[9] then table.insert(items, i + 1) end
+                        if gm.array_get(item, 6) == gm.array_get(printer.item, 6)
+                        and gm.array_get(item, 8) ~= gm.array_get(printer.item, 8) then table.insert(items, id + 1) end
                     end
                 end
             end
@@ -300,7 +303,7 @@ function printer_draw()
         if p.is_printer then
 
             -- Draw hovering sprite
-            draw_item_sprite(p.item[8],
+            draw_item_sprite(gm.array_get(p.item, 7),
                             p.x + 10,
                             p.y - 33 + gm.dsin(frame * 1.333) * 3,
                             0.8,
@@ -309,7 +312,7 @@ function printer_draw()
             -- Display item name
             if config.show_names then
                 local cb = 0
-                local c = Colors[p.item[7] + 1]
+                local c = Colors[gm.array_get(p.item, 6) + 1]
                 for i = 1, 2 do gm.draw_text_color(p.x + i, p.y - 64 + i, p.name, cb, cb, cb, cb, 1.0) end
                 gm.draw_text_color(p.x, p.y - 64, p.name, c, c, c, c, 1.0)
             end
@@ -320,7 +323,8 @@ function printer_draw()
 
                 -- Draw above player
                 if p.active == 3 then
-                    draw_item_sprite(class_item[p.taken + 1][8], p.activator.x, p.activator.y - 48)
+                    local item_array = gm.array_get(Class.ITEM, p.taken)
+                    draw_item_sprite(gm.array_get(item_array, 7), p.activator.x, p.activator.y - 48)
 
                     if p.animation_time < animation_held_time then p.animation_time = p.animation_time + 1
                     else
@@ -330,7 +334,8 @@ function printer_draw()
 
                 -- Lerp item towards input box
                 elseif p.active == 4 then
-                    draw_item_sprite(class_item[p.taken + 1][8], p.taken_x, p.taken_y, p.taken_scale)
+                    local item_array = gm.array_get(Class.ITEM, p.taken)
+                    draw_item_sprite(gm.array_get(item_array, 7), p.taken_x, p.taken_y, p.taken_scale)
                     p.taken_x = gm.lerp(p.taken_x, p.box_x, 0.1)
                     p.taken_y = gm.lerp(p.taken_y, p.box_y, 0.1)
                     p.taken_scale = gm.lerp(p.taken_scale, box_input_scale, 0.1)

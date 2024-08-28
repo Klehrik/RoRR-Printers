@@ -54,3 +54,6 @@
     * This also fixes printers not setting up correctly when two or more spawn on top of each other
 * Audio now scales with volume settings
 * Moved "Show item names" to menu bar (under Mods)
+
+### v1.0.12
+* Fixed lag issues on longer runs

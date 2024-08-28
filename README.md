@@ -13,6 +13,8 @@ Compatible with online multiplayer.
 (Avg. 1.35 per stage)
 ```
 
+Also consider installing [Scrappers](https://thunderstore.io/c/risk-of-rain-returns/p/Klehrik/Scrappers/).
+
 ![Printer showcase.gif](https://github.com/Klehrik/RoRR-Printers/blob/daa3a558a2af6e43e1f946d669880f6a47d25995/printer_showcase_2.gif?raw=true)
 
 ---
