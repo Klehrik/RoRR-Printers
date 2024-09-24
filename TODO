@@ -1,0 +1,6 @@
+v Fix font for printer name display
+- Fix interact prompt being very high and to the right for some reason
+v Spawn printers on ship
+- Multiplayer sync
+- Add Scrappers to dependencies (after done that)
+v Prevent spawning with Command active

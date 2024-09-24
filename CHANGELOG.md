@@ -1,28 +1,32 @@
-### v1.0.0
-* Initial release
+### v1.0.13
+* Updated alongside RMT.
+* Is now a proper interactable and uses up stage credits to spawn.
+* Multiplayer support is currently disfunctional, and will be brought back next update.
 
-### v1.0.1
-* Tweaked spawning chances and amount
-* Updated sprite
-* Added sfx
+### v1.0.12
+* Fixed lag issues on longer runs
 
-### v1.0.2
-* Updated icon.png
-* Added short animation
-* Change: Only prints vanilla items (as items from BreathingUnderwater did not spawn)
-* Fix: Can no longer fire off infinite fireworks when interacting without a valid item
+### v1.0.11
+* Increased average spawn rate by 35%, and increased chance of at least 1 printer spawning
+* Can now spawn modded items
+* Printers can no longer spawn on top of other interactables
+    * This also fixes printers not setting up correctly when two or more spawn on top of each other
+* Audio now scales with volume settings
+* Moved "Show item names" to menu bar (under Mods)
 
-### v1.0.3
-* Change: Can no longer print an item into itself
-    * This is how it usually works in RoR2, but in Returns it is abusable with the Substandard Duplicator
-    * This change will also prevent fireworks from being used freely in the same manner
+### v1.0.10
+* Fixed Command being checked in some situations as active when it isn't
 
-### v1.0.4
-* Fix: Printers can no longer be triggered using Explorer's Key
+### v1.0.9
+* Printers no longer spawn when Command is active
 
-### v1.0.5
-* Slightly tweaked floating item appearance
-* 3 printers (white, green, red) will now always spawn in the Contact Light's cabin room
+### v1.0.8
+* Now synced in online multiplayer
+* "Show printer item names" now defaults to false
+
+### v1.0.7
+* Added option to turn off hovering item names (in an ImGui window)
+* Locked items can no longer spawn in printers
 
 ### v1.0.6
 * Tweaked spawning chances again
@@ -33,27 +37,28 @@
     * I thought I had already covered this but I guess not
 * Now prioritizes item scraps from Scrappers mod
 
-### v1.0.7
-* Added option to turn off hovering item names (in an ImGui window)
-* Locked items can no longer spawn in printers
+### v1.0.5
+* Slightly tweaked floating item appearance
+* 3 printers (white, green, red) will now always spawn in the Contact Light's cabin room
 
-### v1.0.8
-* Now synced in online multiplayer
-* "Show printer item names" now defaults to false
+### v1.0.4
+* Fix: Printers can no longer be triggered using Explorer's Key
 
-### v1.0.9
-* Printers no longer spawn when Command is active
+### v1.0.3
+* Change: Can no longer print an item into itself
+    * This is how it usually works in RoR2, but in Returns it is abusable with the Substandard Duplicator
+    * This change will also prevent fireworks from being used freely in the same manner
 
-### v1.0.10
-* Fixed Command being checked in some situations as active when it isn't
+### v1.0.2
+* Updated icon.png
+* Added short animation
+* Change: Only prints vanilla items (as items from BreathingUnderwater did not spawn)
+* Fix: Can no longer fire off infinite fireworks when interacting without a valid item
 
-### v1.0.11
-* Increased average spawn rate by 35%, and increased chance of at least 1 printer spawning
-* Can now spawn modded items
-* Printers can no longer spawn on top of other interactables
-    * This also fixes printers not setting up correctly when two or more spawn on top of each other
-* Audio now scales with volume settings
-* Moved "Show item names" to menu bar (under Mods)
+### v1.0.1
+* Tweaked spawning chances and amount
+* Updated sprite
+* Added sfx
 
-### v1.0.12
-* Fixed lag issues on longer runs
+### v1.0.0
+* Initial release
